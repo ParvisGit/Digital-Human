@@ -1,0 +1,100 @@
+syntax = "proto3";
+
+package chat;
+
+// ==========================================================
+// ChatService
+// ----------------------------------------------------------
+// Defines the gRPC service responsible for handling chat/voice
+// interactions between client and bot.
+//
+// StreamMessages:
+// - Client sends a single ChatRequest.
+// - Server responds with a stream of ChatResponse messages.
+// - This enables real-time bot replies (streaming responses),
+// ==========================================================
+service ChatService {
+  rpc StreamMessages (ChatRequest) returns (stream ChatResponse);
+}
+
+
+// ==========================================================
+// Metadata
+// ----------------------------------------------------------
+// Contains contextual/session information about the user,
+// bot, and call/chat environment.
+// ==========================================================
+message Metadata {
+    string user_no = 1;
+    string email_id = 2;
+    string bot_id = 3;
+    string bot_name = 4;
+    string call_direction = 5;
+}
+
+
+// ==========================================================
+// Content
+// ----------------------------------------------------------
+// Represents a single content block sent by the bot.
+// ==========================================================
+message Content {
+  enum ContentType {
+    TEXT = 0;
+  }
+  ContentType type = 1;
+  string message = 2;
+}
+
+
+// ==========================================================
+// Action
+// ----------------------------------------------------------
+// Defines system-level actions that must be executed after
+// ==========================================================
+message Action {
+  enum ActionType {
+    HANGUP = 0;
+    TRUNK_TRANSFER = 1;
+    BOT_TRANSFER = 2;
+    NoAction = 3;
+  }
+  ActionType type = 1;
+  string uri = 2;
+}
+
+
+// ==========================================================
+// MetadataResponse
+// ----------------------------------------------------------
+message MetadataResponse {
+  string disposition = 1;
+  string SPEECH_DTMF_MAXLEN = 2;
+  string asr_timeout = 3;
+}
+
+
+// ==========================================================
+// ChatRequest
+// ----------------------------------------------------------
+message ChatRequest {
+  string unique_id = 1;
+  string message = 2;
+  Metadata metadata = 3;
+  string language = 4;
+  string channel = 5;
+}
+
+
+// ==========================================================
+// ChatResponse
+// ----------------------------------------------------------
+message ChatResponse {
+  string channel_id = 1;
+  string unique_id = 2;
+  string language = 3;
+  repeated Content content = 4;
+  Action action = 5;
+  MetadataResponse metadata = 6;
+  string dynamic_data = 7;
+}

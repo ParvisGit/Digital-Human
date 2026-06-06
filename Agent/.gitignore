@@ -1,0 +1,37 @@
+# ── Secrets — NEVER commit ────────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+**/aeap-stt-service-account.json
+**/vertex-gemini-agent.json
+
+# ── Python ────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ── Virtual environments ──────────────────────────────────────────
+.env/
+.venv/
+env/
+env1/
+venv/
+ENV/
+
+# ── Logs / runtime artifacts ──────────────────────────────────────
+logs/
+*.log
+Banking_agent/docs/execution_graph.png
+
+# ── IDE / OS ──────────────────────────────────────────────────────
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

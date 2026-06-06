@@ -1,0 +1,18 @@
+mongoengine
+pytest
+langchain
+langchain-google-genai
+langgraph
+langchain-classic
+streamlit
+# Optional: for MongoDB checkpoint persistence (falls back to InMemorySaver if not installed)
+# langgraph-checkpoint-mongodb
+
+# Optional: for Redis checkpoint persistence (AVA-style, falls back to InMemorySaver if not installed/unavailable)
+langgraph-checkpoint-redis>=0.3.0
+# Redis for session store (greeting/authentication); used when REDIS_HOST is set
+redis>=5.0
+
+# gRPC server
+grpcio
+grpcio-tools

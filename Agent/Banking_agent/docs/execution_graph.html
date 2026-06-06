@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Banking Agent - Execution Graph</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>body{font-family:sans-serif;margin:2rem;background:#fafafa}
+h1{color:#333;font-size:1.4rem}
+.mermaid{background:#fff;padding:2rem;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.1)}
+p{color:#666;font-size:.85rem}</style>
+</head><body>
+<h1>Banking Agent &mdash; Execution Graph</h1>
+<p>Auto-generated on service startup. Solid lines = fixed edges, dashed = conditional routing.</p>
+<div class="mermaid">
+---
+config:
+  flowchart:
+    curve: linear
+---
+graph TD;
+	__start__([<p>__start__</p>]):::first
+	enter_greeting_agent(enter_greeting_agent)
+	greeting_agent(greeting_agent)
+	greeting_agent_tools(greeting_agent_tools)
+	enter_authentication_agent(enter_authentication_agent)
+	authentication_agent(authentication_agent)
+	authentication_agent_tools(authentication_agent_tools)
+	enter_balance_transactions_agent(enter_balance_transactions_agent)
+	balance_transactions_agent(balance_transactions_agent)
+	balance_transactions_agent_tools(balance_transactions_agent_tools)
+	enter_credit_card_agent(enter_credit_card_agent)
+	credit_card_agent(credit_card_agent)
+	credit_card_agent_tools(credit_card_agent_tools)
+	enter_fraud_detection_agent(enter_fraud_detection_agent)
+	fraud_detection_agent(fraud_detection_agent)
+	fraud_detection_agent_tools(fraud_detection_agent_tools)
+	enter_loan_agent(enter_loan_agent)
+	loan_agent(loan_agent)
+	loan_agent_tools(loan_agent_tools)
+	enter_grievance_agent(enter_grievance_agent)
+	grievance_agent(grievance_agent)
+	grievance_agent_tools(grievance_agent_tools)
+	__end__([<p>__end__</p>]):::last
+	__start__ --> enter_greeting_agent;
+	authentication_agent -.-> __end__;
+	authentication_agent -.-> authentication_agent_tools;
+	authentication_agent -.-> enter_authentication_agent;
+	authentication_agent -.-> enter_balance_transactions_agent;
+	authentication_agent -.-> enter_credit_card_agent;
+	authentication_agent -.-> enter_fraud_detection_agent;
+	authentication_agent -.-> enter_greeting_agent;
+	authentication_agent -.-> enter_grievance_agent;
+	authentication_agent -.-> enter_loan_agent;
+	authentication_agent_tools -.-> authentication_agent;
+	authentication_agent_tools -.-> enter_balance_transactions_agent;
+	authentication_agent_tools -.-> enter_fraud_detection_agent;
+	authentication_agent_tools -.-> enter_greeting_agent;
+	authentication_agent_tools -.-> enter_grievance_agent;
+	authentication_agent_tools -.-> enter_loan_agent;
+	balance_transactions_agent -.-> __end__;
+	balance_transactions_agent -.-> balance_transactions_agent_tools;
+	balance_transactions_agent -.-> enter_authentication_agent;
+	balance_transactions_agent -.-> enter_balance_transactions_agent;
+	balance_transactions_agent -.-> enter_credit_card_agent;
+	balance_transactions_agent -.-> enter_fraud_detection_agent;
+	balance_transactions_agent -.-> enter_greeting_agent;
+	balance_transactions_agent -.-> enter_grievance_agent;
+	balance_transactions_agent -.-> enter_loan_agent;
+	balance_transactions_agent_tools -.-> balance_transactions_agent;
+	balance_transactions_agent_tools -.-> enter_greeting_agent;
+	credit_card_agent -.-> __end__;
+	credit_card_agent -.-> credit_card_agent_tools;
+	credit_card_agent -.-> enter_authentication_agent;
+	credit_card_agent -.-> enter_balance_transactions_agent;
+	credit_card_agent -.-> enter_credit_card_agent;
+	credit_card_agent -.-> enter_fraud_detection_agent;
+	credit_card_agent -.-> enter_greeting_agent;
+	credit_card_agent -.-> enter_grievance_agent;
+	credit_card_agent -.-> enter_loan_agent;
+	credit_card_agent_tools -.-> credit_card_agent;
+	credit_card_agent_tools -.-> enter_greeting_agent;
+	enter_authentication_agent --> authentication_agent;
+	enter_balance_transactions_agent --> balance_transactions_agent;
+	enter_credit_card_agent --> credit_card_agent;
+	enter_fraud_detection_agent --> fraud_detection_agent;
+	enter_greeting_agent --> greeting_agent;
+	enter_grievance_agent --> grievance_agent;
+	enter_loan_agent --> loan_agent;
+	fraud_detection_agent -.-> __end__;
+	fraud_detection_agent -.-> enter_authentication_agent;
+	fraud_detection_agent -.-> enter_balance_transactions_agent;
+	fraud_detection_agent -.-> enter_credit_card_agent;
+	fraud_detection_agent -.-> enter_fraud_detection_agent;
+	fraud_detection_agent -.-> enter_greeting_agent;
+	fraud_detection_agent -.-> enter_grievance_agent;
+	fraud_detection_agent -.-> enter_loan_agent;
+	fraud_detection_agent -.-> fraud_detection_agent_tools;
+	fraud_detection_agent_tools -.-> enter_greeting_agent;
+	fraud_detection_agent_tools -.-> fraud_detection_agent;
+	greeting_agent -.-> __end__;
+	greeting_agent -.-> enter_authentication_agent;
+	greeting_agent -.-> enter_balance_transactions_agent;
+	greeting_agent -.-> enter_credit_card_agent;
+	greeting_agent -.-> enter_fraud_detection_agent;
+	greeting_agent -.-> enter_greeting_agent;
+	greeting_agent -.-> enter_grievance_agent;
+	greeting_agent -.-> enter_loan_agent;
+	greeting_agent -.-> greeting_agent_tools;
+	greeting_agent_tools -.-> enter_authentication_agent;
+	greeting_agent_tools -.-> enter_balance_transactions_agent;
+	greeting_agent_tools -.-> enter_credit_card_agent;
+	greeting_agent_tools -.-> enter_fraud_detection_agent;
+	greeting_agent_tools -.-> enter_grievance_agent;
+	greeting_agent_tools -.-> enter_loan_agent;
+	greeting_agent_tools -.-> greeting_agent;
+	grievance_agent -.-> __end__;
+	grievance_agent -.-> enter_authentication_agent;
+	grievance_agent -.-> enter_balance_transactions_agent;
+	grievance_agent -.-> enter_credit_card_agent;
+	grievance_agent -.-> enter_fraud_detection_agent;
+	grievance_agent -.-> enter_greeting_agent;
+	grievance_agent -.-> enter_grievance_agent;
+	grievance_agent -.-> enter_loan_agent;
+	grievance_agent -.-> grievance_agent_tools;
+	grievance_agent_tools -.-> enter_greeting_agent;
+	grievance_agent_tools -.-> grievance_agent;
+	loan_agent -.-> __end__;
+	loan_agent -.-> enter_authentication_agent;
+	loan_agent -.-> enter_balance_transactions_agent;
+	loan_agent -.-> enter_credit_card_agent;
+	loan_agent -.-> enter_fraud_detection_agent;
+	loan_agent -.-> enter_greeting_agent;
+	loan_agent -.-> enter_grievance_agent;
+	loan_agent -.-> enter_loan_agent;
+	loan_agent -.-> loan_agent_tools;
+	loan_agent_tools -.-> enter_greeting_agent;
+	loan_agent_tools -.-> loan_agent;
+	classDef default fill:#f2f0ff,line-height:1.2
+	classDef first fill-opacity:0
+	classDef last fill:#bfb6fc
+
+</div>
+<script>mermaid.initialize({startOnLoad:true,theme:'default'});</script>
+</body></html>

@@ -1,0 +1,148 @@
+{
+  "agents": [
+    {
+      "name": "greeting_agent",
+      "req_auth": false,
+      "model": "gemini-2.5-flash",
+      "model_provider": "google",
+      "description": "Greets users, fetches customer names by phone, and routes to authentication or other agents.",
+      "prompt_name": "greeting_agent_prompt",
+      "prompt": "fallback",
+      "agents": [
+        "authentication_agent",
+        "balance_transactions_agent",
+        "credit_card_agent",
+        "fraud_detection_agent",
+        "loan_agent",
+        "grievance_agent"
+      ],
+      "tools": [
+        "fetch_customer_name_tool",
+        "escalate_to_human_tool"
+      ]
+    },
+    {
+      "name": "authentication_agent",
+      "req_auth": false,
+      "model": "gemini-2.5-flash",
+      "model_provider": "google",
+      "description": "Authenticates customers by verifying name and phone number before granting access to account data.",
+      "prompt_name": "authentication_agent_prompt",
+      "prompt": "fallback",
+      "agents": [
+        "balance_transactions_agent",
+        "fraud_detection_agent",
+        "loan_agent",
+        "grievance_agent",
+        "greeting_agent"
+      ],
+      "tools": [
+        "verify_customer_identity_tool",
+        "send_otp_email_tool",
+        "verify_otp_tool",
+        "escalate_to_human_tool"
+      ]
+    },
+    {
+      "name": "balance_transactions_agent",
+      "req_auth": true,
+      "model": "gemini-2.5-flash",
+      "model_provider": "google",
+      "description": "Provides account balance, recent transactions, and customer/account/transaction field lookups. Requires authentication.",
+      "prompt_name": "balance_transactions_agent_prompt",
+      "prompt": "fallback",
+      "agents": [
+        "greeting_agent"
+      ],
+      "tools": [
+        "fetch_account_balance_tool",
+        "fetch_last_n_transactions_tool",
+        "fetch_customer_field_tool",
+        "fetch_account_field_tool",
+        "fetch_transaction_field_tool",
+        "raise_profile_update_request_tool",
+        "escalate_to_human_tool"
+      ]
+    },
+    {
+      "name": "credit_card_agent",
+      "req_auth": true,
+      "model": "gemini-2.5-flash",
+      "model_provider": "google",
+      "description": "Provides credit card details including balance, credit limit, available credit, minimum payment due, and payment due date. Requires authentication.",
+      "prompt_name": "credit_card_agent_prompt",
+      "prompt": "fallback",
+      "agents": [
+        "greeting_agent"
+      ],
+      "tools": [
+        "fetch_credit_card_details_tool",
+        "fetch_credit_card_balance_tool",
+        "fetch_credit_card_transactions_tool",
+        "credit_card_eligibility_tool",
+        "credit_card_recommendation_tool",
+        "raise_service_request_tool",
+        "escalate_to_human_tool"
+      ]
+    },
+    {
+      "name": "fraud_detection_agent",
+      "req_auth": true,
+      "model": "gemini-2.5-flash",
+      "model_provider": "google",
+      "description": "Handles fraud-related concerns including suspicious transactions, account blocking, and fraud reporting.",
+      "prompt_name": "fraud_detection_agent_prompt",
+      "prompt": "fallback",
+      "agents": [
+        "greeting_agent"
+      ],
+      "tools": [
+        "suspicious_transactions_tool",
+        "block_card_tool",
+        "freeze_account_tool",
+        "flag_account_tool",
+        "report_fraud_tool",
+        "unblock_card_tool",
+        "unfreeze_account_tool",
+        "check_fraud_case_status_tool",
+        "raise_service_request_tool",
+        "send_otp_tool",
+        "verify_otp_tool",
+        "escalate_to_human_tool"
+      ]
+    },
+    {
+      "name": "loan_agent",
+      "req_auth": true,
+      "model": "gemini-2.5-flash",
+      "model_provider": "google",
+      "description": "Provides loan details including loan type, amount, interest rate, term, and status. Requires authentication.",
+      "prompt_name": "loan_agent_prompt",
+      "prompt": "fallback",
+      "agents": [
+        "greeting_agent"
+      ],
+      "tools": [
+        "fetch_loan_details_tool",
+        "fetch_loan_status_tool",
+        "escalate_to_human_tool"
+      ]
+    },
+    {
+      "name": "grievance_agent",
+      "req_auth": false,
+      "model": "gemini-2.5-flash",
+      "model_provider": "google",
+      "description": "Registers customer complaints and grievances including fee disputes, wrong debits, and service issues. Provides a ticket number for tracking.",
+      "prompt_name": "grievance_agent_prompt",
+      "prompt": "fallback",
+      "agents": [
+        "greeting_agent"
+      ],
+      "tools": [
+        "register_complaint_tool",
+        "escalate_to_human_tool"
+      ]
+    }
+  ]
+}

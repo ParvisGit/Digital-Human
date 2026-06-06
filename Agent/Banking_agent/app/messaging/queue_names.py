@@ -1,0 +1,1 @@
+TRANSCRIPTION_QUEUE = "bfsi_chat_logs_queue"
