@@ -1,315 +1,284 @@
 {
   "tool_message_mapping": {
     "balance_transactions": [
-    "Sure, just give me a moment while I pull that up for you.",
-    "Let me have a quick look at your account — won't take long.",
-    "Hang on a second, I'm grabbing those details right now.",
-    "Alright, let me check that for you, one moment please.",
-    "Just a moment while I pull your account up — be right with you.",
-    "Okay, give me a sec, I'm looking into that now.",
-    "Sure thing, hold on a second while I take a look.",
-    "Let me see, just pulling that up for you now."
-  ],
+      "I am retrieving your account information. Kindly hold.",
+      "Accessing your account details from our secure system.",
+      "Your account information is being retrieved. One moment please.",
+      "Please bear with me while I access your account records.",
+      "Retrieving your account data securely. This will only take a moment.",
+      "I am pulling up your account information. Please hold."
+    ],
     "greeting": [
-    "Just a moment while I look up your details.",
-    "Sure, give me a second, let me pull that up.",
-    "Alright, hang on a moment while I check that.",
-    "One second please, just looking you up now.",
-    "Okay, let me take a quick look — won't be long.",
-    "Hang on a sec, pulling up your information now.",
-    "Just give me a moment, I'm checking on that for you."
-  ],
+      "I am retrieving your customer profile. One moment please.",
+      "Accessing your information from our secure system.",
+      "Please bear with me while I look up your details.",
+      "Your profile is being retrieved. Kindly hold.",
+      "I am accessing your customer information securely.",
+      "Retrieving your details from our records. One moment please."
+    ],
     "credit_card": [
-    "Sure, just a moment while I pull up your card details.",
-    "Let me have a quick look at your card information.",
-    "Hang on a second, I'm grabbing those card details now.",
-    "Alright, let me check your card for you, one moment.",
-    "Just give me a moment while I pull that up.",
-    "Okay, one sec — I'm looking at your card now.",
-    "Sure thing, hold on, I'll have that for you in a moment.",
-    "Let me see, just pulling up your card details now."
-  ],
+      "I am retrieving your card information. Kindly hold.",
+      "Accessing your credit card details from our secure system.",
+      "Your card information is being retrieved. One moment please.",
+      "Please bear with me while I access your card records.",
+      "Retrieving your credit card data securely.",
+      "I am pulling up your card information. Please hold."
+    ],
     "credit_card_agent": [
-    "Sure, just a moment while I pull up your card details.",
-    "Let me have a quick look at your card information.",
-    "Hang on a second, I'm grabbing those card details now.",
-    "Alright, let me check your card for you, one moment.",
-    "Just give me a moment while I pull that up.",
-    "Okay, one sec — I'm looking at your card now.",
-    "Sure thing, hold on, I'll have that for you in a moment.",
-    "Let me see, just pulling up your card details now."
-  ],
-    "fraud_detection":[
-    "Alright, let me look into that for you right away.",
-    "Hang on, I'm pulling up your recent activity now.",
-    "Just a moment while I take a look at this.",
-    "Okay, give me a second, I'm checking on this for you.",
-    "Let me check that straight away — one moment please.",
-    "Sure, I'm reviewing that on your account right now.",
-    "Hold on a second, I'm looking into this for you."
-  ],
+      "I am retrieving your card information. Kindly hold.",
+      "Accessing your credit card details from our secure system.",
+      "Your card information is being retrieved. One moment please.",
+      "Please bear with me while I access your card records.",
+      "Retrieving your credit card data securely.",
+      "I am pulling up your card information. Please hold."
+    ],
+    "fraud_detection": [
+      "I am reviewing your account activity for any irregularities.",
+      "Analyzing your recent transactions. Please bear with me.",
+      "Your account activity is being reviewed. Kindly hold.",
+      "I am conducting a security review of your account.",
+      "Examining your transaction history. One moment please.",
+      "Your fraud concern is being investigated with priority."
+    ],
     "fraud_detection_agent": [
-    "Alright, let me look into that for you right away.",
-    "Hang on, I'm pulling up your recent activity now.",
-    "Just a moment while I take a look at this.",
-    "Okay, give me a second, I'm checking on this for you.",
-    "Let me check that straight away — one moment please.",
-    "Sure, I'm reviewing that on your account right now.",
-    "Hold on a second, I'm looking into this for you."
-  ],
+      "I am reviewing your account activity for any irregularities.",
+      "Analyzing your recent transactions. Please bear with me.",
+      "Your account activity is being reviewed. Kindly hold.",
+      "I am conducting a security review of your account.",
+      "Examining your transaction history. One moment please.",
+      "Your fraud concern is being investigated with priority."
+    ],
     "fetch_account_balance_tool": [
-    "Sure, just give me a moment while I pull up your latest balance.",
-    "Let me have a quick look at what's available in your account.",
-    "Hang on a second, I'm fetching your balance now.",
-    "Alright, let me check that for you — one moment please.",
-    "Just a moment while I pull up the latest figure.",
-    "Okay, give me a sec, getting your balance details now.",
-    "Sure thing, hold on while I grab your balance.",
-    "Let me see, just pulling up your balance for you."
-  ],
+      "I am retrieving your current account balance. Kindly hold.",
+      "Accessing your balance information from our secure system.",
+      "Your account balance is being retrieved. One moment please.",
+      "Please bear with me while I fetch your current balance.",
+      "Retrieving your account balance securely.",
+      "I am pulling up your latest balance information."
+    ],
     "fetch_last_n_transactions_tool": [
-    "Sure, let me pull up your recent transactions for you.",
-    "Hang on a second, I'm grabbing your last few transactions now.",
-    "Alright, just a moment while I look at your activity.",
-    "Okay, give me a sec, fetching your recent transactions.",
-    "Let me have a look at what's been happening on your account.",
-    "Just a moment while I pull up your latest activity.",
-    "One second please, I'm checking your recent transactions.",
-    "Sure thing, let me grab those transactions for you now."
-  ],
+      "I am retrieving your recent transaction history. Kindly hold.",
+      "Accessing your transaction records from our secure system.",
+      "Your recent transactions are being retrieved. One moment please.",
+      "Please bear with me while I fetch your transaction history.",
+      "Retrieving your recent account activity securely.",
+      "I am pulling up your latest transactions."
+    ],
     "fetch_customer_name_tool": [
-    "Just a moment while I look that up for you.",
-    "Sure, give me a second, pulling up your details.",
-    "Alright, hang on a moment while I check.",
-    "One second please, just looking that up.",
-    "Okay, let me take a quick look — won't be long.",
-    "Hang on a sec, I'm pulling up your information.",
-    "Just give me a moment, I'm checking on that."
-  ],
+      "I am retrieving your customer profile. Kindly hold.",
+      "Accessing your information from our secure system.",
+      "Your details are being retrieved. One moment please.",
+      "Please bear with me while I look up your profile.",
+      "Retrieving your customer information securely.",
+      "I am accessing your records. Please hold."
+    ],
     "fetch_account_field_tool": [
-    "Sure, just a moment while I pull up your account details.",
-    "Let me grab that information for you, one second.",
-    "Hang on a second, I'm checking your account now.",
-    "Alright, give me a moment while I pull that up.",
-    "Just a sec, I'm looking up your account details.",
-    "Okay, one moment while I fetch that for you.",
-    "Hold on please, let me check that on your account."
-  ],
+      "I am retrieving your account details. Kindly hold.",
+      "Accessing the requested information from our secure system.",
+      "Your account information is being retrieved. One moment please.",
+      "Please bear with me while I fetch the requested details.",
+      "Retrieving your account data securely.",
+      "I am accessing the requested information. Please hold."
+    ],
     "fetch_transaction_field_tool": [
-    "Sure, let me pull up that transaction for you.",
-    "Hang on a second, I'm looking it up now.",
-    "Alright, give me a moment while I check those details.",
-    "Okay, just a sec, fetching that transaction info.",
-    "Let me have a quick look at that for you.",
-    "Just a moment, I'm pulling up the details now.",
-    "Hold on please, checking that transaction now."
-  ],
-    "fetch_customer_field_tool":[
-    "Sure, just a moment while I pull up your details.",
-    "Hang on a second, I'm checking that for you now.",
-    "Alright, let me grab that information — one moment.",
-    "Okay, give me a sec, looking that up now.",
-    "Just a moment while I pull your details up.",
-    "Let me have a quick look at that for you.",
-    "Hold on please, checking your profile now."
-  ],
+      "I am retrieving the transaction details. Kindly hold.",
+      "Accessing the requested transaction information.",
+      "Your transaction details are being retrieved. One moment please.",
+      "Please bear with me while I fetch the transaction data.",
+      "Retrieving the requested transaction information securely.",
+      "I am accessing the transaction records. Please hold."
+    ],
+    "fetch_customer_field_tool": [
+      "I am retrieving your profile information. Kindly hold.",
+      "Accessing the requested details from our secure system.",
+      "Your profile information is being retrieved. One moment please.",
+      "Please bear with me while I fetch the requested details.",
+      "Retrieving your customer data securely.",
+      "I am accessing the requested information. Please hold."
+    ],
     "suspicious_transactions_tool": [
-    "Alright, let me have a look at your recent activity.",
-    "Hang on a second, I'm going through your transactions.",
-    "Just a moment while I review what's been happening on your account.",
-    "Okay, give me a sec, checking your recent activity now.",
-    "Let me pull up your transactions and have a look — one moment.",
-    "Sure, I'm reviewing the activity on your account right now.",
-    "Hold on please, just going through your recent transactions."
-  ],
+      "I am reviewing your account activity for any irregularities.",
+      "Analyzing your recent transactions for suspicious activity.",
+      "Your transaction history is being reviewed. Kindly hold.",
+      "Please bear with me while I examine your recent activity.",
+      "Conducting a security review of your transactions.",
+      "I am investigating your account activity. One moment please."
+    ],
     "block_card_tool": [
-    "Alright, locking your card down right now.",
-    "Hang on a second, I'm securing your card.",
-    "On it — blocking your card straight away.",
-    "Just a moment while I get your card blocked.",
-    "Okay, taking care of that for you right now.",
-    "Securing your card now — won't take long.",
-    "Hold on please, I'm blocking it as we speak."
-  ],
+      "Your card is being blocked for your protection. Please hold.",
+      "I am processing your card block request immediately.",
+      "Initiating card security measures. This will only take a moment.",
+      "Your card block request is being processed with priority.",
+      "Securing your card immediately. Kindly hold.",
+      "I am blocking your card as requested. One moment please."
+    ],
     "freeze_account_tool": [
-    "Alright, freezing your account right now.",
-    "Hang on a second, I'm securing your account.",
-    "On it — locking your account down straight away.",
-    "Just a moment while I get your account frozen.",
-    "Okay, taking care of that for you right now.",
-    "Securing your account now — won't take long.",
-    "Hold on please, freezing it as we speak."
-  ],
-    "flag_account_tool":  [
-    "Alright, flagging your account for the team to review.",
-    "Hang on a second, I'm marking your account now.",
-    "On it — getting your account tagged for review.",
-    "Just a moment while I flag this on your account.",
-    "Okay, taking care of that flag for you now.",
-    "Sure, marking your account for review right now.",
-    "Hold on please, flagging it as we speak."
-  ],
-    "report_fraud_tool":  [
-    "Alright, registering this for you right now.",
-    "Hang on a second, I'm logging the details now.",
-    "On it — getting this on record straight away.",
-    "Just a moment while I record everything you've told me.",
-    "Okay, recording the details for you — one moment.",
-    "Sure, getting this fraud report submitted now.",
-    "Hold on please, just logging this report."
-  ],
+      "Your account is being frozen for your protection. Please hold.",
+      "I am processing your account freeze request immediately.",
+      "Initiating account security measures. This will only take a moment.",
+      "Your account freeze request is being processed with priority.",
+      "Securing your account immediately. Kindly hold.",
+      "I am freezing your account as requested. One moment please."
+    ],
+    "flag_account_tool": [
+      "Your account is being flagged for review. Please hold.",
+      "I am marking your account for our security team's attention.",
+      "Flagging your account for priority review. One moment please.",
+      "Your account flag request is being processed.",
+      "Registering your account for security review. Kindly hold.",
+      "I am flagging your account as requested."
+    ],
+    "report_fraud_tool": [
+      "Your fraud report is being registered. Please hold.",
+      "I am logging your fraud concern with our security team.",
+      "Your fraud report is being processed with priority.",
+      "Registering your fraud complaint. One moment please.",
+      "I am documenting your fraud report for immediate action.",
+      "Your concern is being recorded in our fraud system. Kindly hold."
+    ],
     "fetch_loan_details_tool": [
-    "Sure, just a moment while I pull up your loan details.",
-    "Hang on a second, I'm grabbing your loan information now.",
-    "Alright, let me check your loan for you — one moment please.",
-    "Just give me a sec, fetching your loan details.",
-    "Okay, one moment while I pull that up for you.",
-    "Let me have a quick look at your loan information.",
-    "Hold on please, I'm checking your loan now."
-  ],
+      "I am retrieving your loan account information. Kindly hold.",
+      "Accessing your loan details from our secure system.",
+      "Your loan information is being retrieved. One moment please.",
+      "Please bear with me while I fetch your loan details.",
+      "Retrieving your loan account data securely.",
+      "I am pulling up your loan information. Please hold."
+    ],
     "fetch_loan_status_tool": [
-    "Sure, let me check your loan status for you.",
-    "Hang on a second, I'm looking up where your loan stands.",
-    "Just a moment while I pull up the latest status.",
-    "Okay, give me a sec, checking your loan now.",
-    "Alright, one moment while I look that up.",
-    "Let me have a quick look at the status for you.",
-    "Hold on please, fetching your loan status now."
-  ],
+      "I am retrieving your loan status. Kindly hold.",
+      "Accessing your loan status from our records.",
+      "Your loan status is being retrieved. One moment please.",
+      "Please bear with me while I check your loan status.",
+      "Retrieving your current loan status securely.",
+      "I am checking your loan status. Please hold."
+    ],
     "fetch_credit_card_details_tool": [
-    "Sure, just a moment while I pull up your card details.",
-    "Hang on a second, I'm grabbing your card information now.",
-    "Alright, let me check your card for you — one moment.",
-    "Just give me a sec, fetching your card details.",
-    "Okay, one moment while I pull that up for you.",
-    "Let me have a quick look at your card.",
-    "Hold on please, checking your card now."
-  ],
+      "I am retrieving your credit card details. Kindly hold.",
+      "Accessing your card information from our secure system.",
+      "Your credit card details are being retrieved. One moment please.",
+      "Please bear with me while I fetch your card information.",
+      "Retrieving your credit card data securely.",
+      "I am pulling up your card details. Please hold."
+    ],
     "fetch_credit_card_balance_tool": [
-    "Sure, let me check your card balance for you.",
-    "Hang on a second, I'm pulling up what's outstanding.",
-    "Alright, just a moment while I fetch your balance.",
-    "Okay, give me a sec, checking your card balance.",
-    "Let me have a quick look at what you owe — one moment.",
-    "Just a moment, I'm grabbing your balance now.",
-    "Hold on please, checking your card balance."
-  ],
+      "I am retrieving your credit card balance. Kindly hold.",
+      "Accessing your card balance from our secure system.",
+      "Your credit card balance is being retrieved. One moment please.",
+      "Please bear with me while I fetch your card balance.",
+      "Retrieving your outstanding balance securely.",
+      "I am checking your credit card balance. Please hold."
+    ],
     "register_complaint_tool": [
-    "Sure, let me get this complaint registered for you.",
-    "Hang on a second, I'm logging your concern now.",
-    "Just a moment while I raise this complaint properly.",
-    "Okay, getting this on record for you — one second.",
-    "Alright, registering your complaint right now.",
-    "Hold on please, I'm raising the ticket for you.",
-    "Let me submit this for you — won't take long."
-  ],
-    "escalate_to_human_tool":[
-    "Sure, putting you through to one of our specialists now.",
-    "Hang on a second, I'm transferring you across.",
-    "Alright, just a moment while I get someone on the line.",
-    "Okay, connecting you to a banking specialist now.",
-    "Just a moment please, I'm bringing someone on for you.",
-    "Hold on please, I'm transferring you across right now.",
-    "One moment while I connect you with a representative."
-  ],
+      "Your complaint is being registered in our system. Please hold.",
+      "I am logging your grievance for immediate attention.",
+      "Your complaint is being processed. One moment please.",
+      "Registering your concern with our support team. Kindly hold.",
+      "I am documenting your complaint for resolution.",
+      "Your grievance is being recorded. Please hold."
+    ],
+    "escalate_to_human_tool": [
+      "I am connecting you with a senior banking representative.",
+      "Transferring you to our dedicated support team. Please hold.",
+      "A banking specialist will be with you shortly.",
+      "I am routing your call to a senior representative. Kindly hold.",
+      "Connecting you with our specialized support team.",
+      "Your call is being transferred to a banking expert. One moment please."
+    ],
     "send_otp_tool": [
-    "Sure, sending a verification code to your phone right now.",
-    "Hang on a second, the code's on its way to your mobile.",
-    "Just a moment, I'm sending that code to your phone now.",
-    "Okay, you should see a code coming through to your phone shortly.",
-    "Alright, sending the code to your registered mobile number now.",
-    "One moment please, the code's heading to your phone.",
-    "Hold on, I'm just sending that across to your mobile."
-  ],
+      "A verification code is being sent to your registered mobile number.",
+      "Dispatching a secure one-time password to your phone.",
+      "Your verification code is being sent. One moment please.",
+      "Sending a secure OTP to your registered number. Kindly hold.",
+      "I am sending a verification code to your mobile.",
+      "Your OTP is being dispatched. Please check your phone shortly."
+    ],
     "send_otp_email_tool": [
-    "Sure, sending a verification code to your email right now.",
-    "Hang on a second, the code's on its way to your inbox.",
-    "Just a moment, I'm sending that to your registered email.",
-    "Okay, you should see a code in your inbox shortly.",
-    "Alright, sending the code to your email now — give it a moment.",
-    "One moment please, the code's heading to your email.",
-    "Hold on, I'm just sending that across to your inbox."
-  ],
+      "A verification code is being sent to your registered email.",
+      "Dispatching a secure one-time password to your inbox.",
+      "Your verification code is being sent via email. One moment please.",
+      "Sending a secure OTP to your registered email. Kindly hold.",
+      "I am sending a verification code to your email.",
+      "Your OTP is being dispatched. Please check your inbox shortly."
+    ],
     "verify_otp_tool": [
-    "Sure, just a moment while I verify that for you.",
-    "Hang on a second, I'm checking the code now.",
-    "Just a sec, let me confirm that on my end.",
-    "Okay, give me a moment to verify that.",
-    "Alright, checking the code right now.",
-    "One moment please, just confirming that.",
-    "Hold on, I'm verifying that as we speak."
-  ],
+      "I am verifying your credentials. Please hold.",
+      "Your verification code is being validated.",
+      "Processing your verification. One moment please.",
+      "Confirming your identity securely. Kindly hold.",
+      "I am validating the verification code.",
+      "Your OTP is being verified. Please hold."
+    ],
     "raise_profile_update_request_tool": [
-    "Sure, submitting that update for you right now.",
-    "Hang on a second, I'm raising the request now.",
-    "Just a moment while I get this update logged.",
-    "Okay, submitting your update — one second please.",
-    "Alright, raising the request on your behalf now.",
-    "Hold on please, I'm getting that submitted for you.",
-    "One moment while I send this update through."
-  ],
-    "unblock_card_tool":  [
-    "Sure, unblocking your card right now.",
-    "Hang on a second, I'm restoring access to your card.",
-    "Just a moment while I get your card unblocked.",
-    "Okay, opening your card back up for you now.",
-    "Alright, reactivating your card — one second.",
-    "Hold on please, I'm unblocking it as we speak.",
-    "One moment while I get that sorted for you."
-  ],
+      "Your profile update request is being submitted. Please hold.",
+      "I am processing your update request.",
+      "Your request is being registered in our system. One moment please.",
+      "Submitting your profile update. Kindly hold.",
+      "I am logging your update request for processing.",
+      "Your update request is being recorded. Please hold."
+    ],
+    "unblock_card_tool": [
+      "Your card is being unblocked. Please hold.",
+      "I am processing your card reactivation request.",
+      "Restoring access to your card. One moment please.",
+      "Your card unblock request is being processed. Kindly hold.",
+      "I am reactivating your card as requested.",
+      "Your card is being restored. Please hold."
+    ],
     "unfreeze_account_tool": [
-    "Sure, unfreezing your account right now.",
-    "Hang on a second, I'm restoring access to your account.",
-    "Just a moment while I get your account unfrozen.",
-    "Okay, opening your account back up for you now.",
-    "Alright, reactivating your account — one second.",
-    "Hold on please, I'm unfreezing it as we speak.",
-    "One moment while I get that sorted for you."
-  ],
+      "Your account is being unfrozen. Please hold.",
+      "I am processing your account reactivation request.",
+      "Restoring access to your account. One moment please.",
+      "Your account unfreeze request is being processed. Kindly hold.",
+      "I am reactivating your account as requested.",
+      "Your account is being restored. Please hold."
+    ],
     "check_fraud_case_status_tool": [
-    "Sure, let me check on that case for you.",
-    "Hang on a second, I'm pulling up the status now.",
-    "Just a moment while I look at where it stands.",
-    "Okay, give me a sec, checking the case details.",
-    "Alright, one moment while I fetch the latest update.",
-    "Let me have a quick look at that case for you.",
-    "Hold on please, checking the status now."
-  ],
+      "I am retrieving your fraud case status. Kindly hold.",
+      "Accessing your case status from our records.",
+      "Your fraud case status is being retrieved. One moment please.",
+      "Please bear with me while I check your case status.",
+      "Retrieving the latest update on your case.",
+      "I am checking your fraud case status. Please hold."
+    ],
     "fetch_credit_card_transactions_tool": [
-    "Sure, let me pull up your card transactions for you.",
-    "Hang on a second, I'm grabbing your recent card activity.",
-    "Just a moment while I look at your card transactions.",
-    "Okay, give me a sec, fetching your recent activity.",
-    "Alright, one moment while I check those for you.",
-    "Let me have a quick look at your card transactions.",
-    "Hold on please, pulling those up now."
-  ],
+      "I am retrieving your credit card transactions. Kindly hold.",
+      "Accessing your card transaction history.",
+      "Your credit card transactions are being retrieved. One moment please.",
+      "Please bear with me while I fetch your card activity.",
+      "Retrieving your recent card transactions securely.",
+      "I am pulling up your credit card activity. Please hold."
+    ],
     "raise_service_request_tool": [
-    "Sure, submitting that for you right now.",
-    "Hang on a second, I'm raising the request now.",
-    "Just a moment while I get this logged.",
-    "Okay, submitting your request — one second please.",
-    "Alright, raising that on your behalf now.",
-    "Hold on please, I'm getting that registered for you.",
-    "One moment while I send this through."
-  ],
+      "Your service request is being submitted. Please hold.",
+      "I am processing your request.",
+      "Your request is being registered in our system. One moment please.",
+      "Submitting your service request. Kindly hold.",
+      "I am logging your request for processing.",
+      "Your service request is being recorded. Please hold."
+    ],
     "credit_card_eligibility_tool": [
-    "Sure, let me check what you qualify for.",
-    "Hang on a second, I'm looking at your eligibility now.",
-    "Just a moment while I review your profile.",
-    "Okay, give me a sec, checking your eligibility.",
-    "Alright, one moment while I take a look at this.",
-    "Let me see what's available for you — one second.",
-    "Hold on please, checking your eligibility now."
-  ],
+      "I am checking your eligibility. Kindly hold.",
+      "Reviewing your profile for card eligibility.",
+      "Your eligibility is being assessed. One moment please.",
+      "Please bear with me while I check your qualification.",
+      "Evaluating your credit card eligibility.",
+      "I am reviewing your eligibility criteria. Please hold."
+    ],
     "credit_card_recommendation_tool": [
-    "Sure, let me find the right card for you.",
-    "Hang on a second, I'm picking out a few good options.",
-    "Just a moment while I see what fits your profile.",
-    "Okay, give me a sec, finding the best card for you.",
-    "Alright, one moment while I check what suits you.",
-    "Let me have a look at what's the best fit — one second.",
-    "Hold on please, picking the right card for you now."
-  ]
+      "I am finding the best card options for you. Kindly hold.",
+      "Analyzing your profile for suitable recommendations.",
+      "Your card recommendations are being prepared. One moment please.",
+      "Please bear with me while I find suitable cards for you.",
+      "Evaluating the best card options for your needs.",
+      "I am preparing personalized card recommendations. Please hold."
+    ],
+    "verify_customer_identity_tool": [
+      "Thank you. Please wait while I verify your details.",
+      "I am validating your information. Kindly hold.",
+      "Verifying your identity. One moment please.",
+      "Please bear with me while I confirm your details.",
+      "Your information is being verified securely.",
+      "I am confirming your identity. Please hold."
+    ]
   }
 }

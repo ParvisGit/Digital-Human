@@ -1,6 +1,7 @@
 import logging
 import smtplib
 from email.mime.text import MIMEText
+from mongoengine import Q
 from Banking_agent.app.Schemas.fetch_balance import Customer
 from Banking_agent.app.config.smtp_settings import (
     get_smtp_host, get_smtp_port, get_smtp_user,
@@ -20,9 +21,8 @@ def fetch_customer_name(phone_number) -> dict:
             logger.info("[CUSTOMER_NAME] Response: %s", result)
             return result
 
-        customer = Customer.objects(Contact_Number=digits).first()
-        if not customer:
-            customer = Customer.objects(Contact_Number=int(digits)).first()
+        # Single query using $or for both string and int formats
+        customer = Customer.objects(Q(Contact_Number=digits) | Q(Contact_Number=int(digits))).first()
         if not customer:
             result = {"found": False, "customer_name": None}
             logger.info("[CUSTOMER_NAME] Response: %s", result)
@@ -67,9 +67,8 @@ def verify_customer_last4_digit(phone_number: str, last_4_digits: str) -> bool:
     try:
         logger.info("[VERIFY_LAST4] Query: phone=%s last4=%s", phone_number, last_4_digits)
         digits = "".join(c for c in str(phone_number) if c.isdigit())
-        customer = Customer.objects(Contact_Number=digits).first()
-        if not customer:
-            customer = Customer.objects(Contact_Number=int(digits)).first()
+        # Single query using $or for both string and int formats
+        customer = Customer.objects(Q(Contact_Number=digits) | Q(Contact_Number=int(digits))).first()
         if not customer:
             logger.info("[VERIFY_LAST4] Response: Customer not found")
             return False
@@ -86,9 +85,8 @@ def fetch_customer_email_by_phone(phone_number: str) -> dict:
     """Fetch customer email by phone number."""
     try:
         digits = "".join(c for c in str(phone_number) if c.isdigit())
-        customer = Customer.objects(Contact_Number=digits).first()
-        if not customer:
-            customer = Customer.objects(Contact_Number=int(digits)).first()
+        # Single query using $or for both string and int formats
+        customer = Customer.objects(Q(Contact_Number=digits) | Q(Contact_Number=int(digits))).first()
         if not customer:
             return {"found": False}
         return {

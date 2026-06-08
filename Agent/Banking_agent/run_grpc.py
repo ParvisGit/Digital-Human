@@ -51,6 +51,9 @@ class ChatServiceServicer(aivoice_pb2_grpc.ChatServiceServicer):
         session_id = request.unique_id or f"grpc_{id(request)}"
         user_message = request.message or ""
 
+        # Log incoming gRPC request
+        logger.info(f"GRPC_REQUEST|session={session_id}|message={user_message}|channel={request.channel}|metadata={request.metadata}")
+
         try:
             if not user_message.strip():
                 yield self._create_response(request, "Please provide a message.")
@@ -100,8 +103,11 @@ class ChatServiceServicer(aivoice_pb2_grpc.ChatServiceServicer):
                     latency_ms = int((time.time() - request_start_time) * 1000)
                     logger.info(f"RESPONSE|{session_id}|{msg_content[:100]}")
 
-                    # Log user message
-                    publish_chat_log({
+                    # Yield response FIRST for faster user experience
+                    yield self._create_response(request, msg_content)
+
+                    # Log in background (non-blocking)
+                    user_log = {
                         "trace_id": str(uuid.uuid4()),
                         "session_id": session_id,
                         "phone_number": phone_number,
@@ -112,9 +118,8 @@ class ChatServiceServicer(aivoice_pb2_grpc.ChatServiceServicer):
                         "latency": 0,
                         "status": "success",
                         "timestamp": datetime.utcnow(),
-                    })
-                    # Log bot response
-                    publish_chat_log({
+                    }
+                    bot_log = {
                         "trace_id": str(uuid.uuid4()),
                         "session_id": session_id,
                         "phone_number": phone_number,
@@ -125,9 +130,9 @@ class ChatServiceServicer(aivoice_pb2_grpc.ChatServiceServicer):
                         "latency": latency_ms / 1000,
                         "status": "success",
                         "timestamp": datetime.utcnow(),
-                    })
-
-                    yield self._create_response(request, msg_content)
+                    }
+                    asyncio.create_task(asyncio.to_thread(publish_chat_log, user_log))
+                    asyncio.create_task(asyncio.to_thread(publish_chat_log, bot_log))
 
                 elif msg_type == "hangup":
                     output = msg_content
@@ -135,7 +140,11 @@ class ChatServiceServicer(aivoice_pb2_grpc.ChatServiceServicer):
                     latency_ms = int((time.time() - request_start_time) * 1000)
                     logger.info(f"HANGUP|{session_id}|{msg_content[:100]}")
 
-                    publish_chat_log({
+                    # Yield response FIRST for faster user experience
+                    yield self._create_hangup_response(request, msg_content)
+
+                    # Log in background (non-blocking)
+                    user_log = {
                         "trace_id": str(uuid.uuid4()),
                         "session_id": session_id,
                         "phone_number": phone_number,
@@ -146,8 +155,8 @@ class ChatServiceServicer(aivoice_pb2_grpc.ChatServiceServicer):
                         "latency": 0,
                         "status": "hangup",
                         "timestamp": datetime.utcnow(),
-                    })
-                    publish_chat_log({
+                    }
+                    bot_log = {
                         "trace_id": str(uuid.uuid4()),
                         "session_id": session_id,
                         "phone_number": phone_number,
@@ -158,16 +167,20 @@ class ChatServiceServicer(aivoice_pb2_grpc.ChatServiceServicer):
                         "latency": latency_ms / 1000,
                         "status": "hangup",
                         "timestamp": datetime.utcnow(),
-                    })
-
-                    yield self._create_hangup_response(request, msg_content)
+                    }
+                    asyncio.create_task(asyncio.to_thread(publish_chat_log, user_log))
+                    asyncio.create_task(asyncio.to_thread(publish_chat_log, bot_log))
 
                 elif msg_type == "escalate":
                     output = msg_content
                     latency_ms = int((time.time() - request_start_time) * 1000)
                     logger.info(f"ESCALATE|{session_id}|agent={agent_name}|{msg_content[:100]}")
 
-                    publish_chat_log({
+                    # Yield response FIRST for faster user experience
+                    yield self._create_escalation_response(request, msg_content)
+
+                    # Log in background (non-blocking)
+                    user_log = {
                         "trace_id": str(uuid.uuid4()),
                         "session_id": session_id,
                         "phone_number": phone_number,
@@ -178,8 +191,8 @@ class ChatServiceServicer(aivoice_pb2_grpc.ChatServiceServicer):
                         "latency": 0,
                         "status": "escalated",
                         "timestamp": datetime.utcnow(),
-                    })
-                    publish_chat_log({
+                    }
+                    bot_log = {
                         "trace_id": str(uuid.uuid4()),
                         "session_id": session_id,
                         "phone_number": phone_number,
@@ -190,9 +203,9 @@ class ChatServiceServicer(aivoice_pb2_grpc.ChatServiceServicer):
                         "latency": latency_ms / 1000,
                         "status": "escalated",
                         "timestamp": datetime.utcnow(),
-                    })
-
-                    yield self._create_escalation_response(request, msg_content)
+                    }
+                    asyncio.create_task(asyncio.to_thread(publish_chat_log, user_log))
+                    asyncio.create_task(asyncio.to_thread(publish_chat_log, bot_log))
 
             if not output:
                 yield self._create_response(

@@ -2,9 +2,11 @@
 Multi-agent banking graph: tool-based routing, ChatPromptTemplate + bind_tools.
 greeting_agent is the main entry; routes via to_<agent> tools.
 """
+import asyncio
 import json
 import logging
 import re
+import os
 from typing import Annotated, TypedDict
 
 logger = logging.getLogger("banking_agent.graph")
@@ -17,6 +19,7 @@ from Banking_agent.app.Agents.runnables import load_config, create_agent_runnabl
 from Banking_agent.app.Utils.tool_registry import TOOL_REGISTRY
 from Banking_agent.app.Utils.tool_node import create_tool_node
 from Banking_agent.app.Utils.prompt_cache_loader import preload_prompts
+from Banking_agent.app.Utils.interim_cache_loader import preload_interim_messages
 
 def _keep_latest_non_empty(old: str, new: str) -> str:
     if new and new.strip():
@@ -53,6 +56,13 @@ def _looks_like_name(text: str) -> bool:
     return all(len(p) >= 2 and p.replace("-", "").replace("'", "").isalpha() for p in parts)
 
 def _extract_text(content) -> str:
+    """Normalize LLM response content to plain string (provider-agnostic).
+    
+    Handles different content formats from various providers:
+    - Google/Gemini: str or list[dict] with {"type": "text", "text": "..."}
+    - OpenAI: str
+    - Anthropic: str or list[ContentBlock] with .text attribute
+    """
     if content is None:
         return ""
     if isinstance(content, str):
@@ -62,6 +72,8 @@ def _extract_text(content) -> str:
         for item in content:
             if isinstance(item, dict):
                 parts.append(item.get("text", ""))
+            elif hasattr(item, "text"):
+                parts.append(item.text)
             else:
                 parts.append(str(item))
         return "".join(parts)
@@ -129,7 +141,6 @@ def _build_ava_style_graph():
                 result = await runnable.ainvoke({"messages": msgs})
 
                 _raw_content = getattr(result, "content", "") or ""
-                print("RAWWWWWWWWW CONTENT", _raw_content)
                 if isinstance(_raw_content, list):
                     # Newer Gemini SDKs (e.g. gemini-2.5-flash) return content as
                     # a list of parts like [{"type": "text", "text": "..."}, ...].
@@ -142,11 +153,9 @@ def _build_ava_style_graph():
                         )
                         for part in _raw_content
                     )
-                    print("CONTENTTTTTT",content)
                 else:
                     content = str(_raw_content)
                 result_tool_calls = getattr(result, "tool_calls", []) or []
-                print("result_tools_Callssssss",result_tool_calls)
 
                 # AUTH GUARD — enforce authentication for protected agents
                 _auth_required_agents = {"fraud_detection_agent", "loan_agent", "credit_card_agent"}
@@ -218,23 +227,26 @@ def _build_ava_style_graph():
                                         user_provided_phone = True
                                         logger.info("[%s] Phone pre-confirmed by directive", name)
                                         break
-                                    if "calling from phone number" in sc or "phone number" in sc:
-                                        match = re.search(r"phone.?number[\"= ]+(\d+)", sc)
-                                        if match:
-                                            context_phone_in_history = match.group(1)
-                                            if phone_arg.endswith(context_phone_in_history[-10:]):
-                                                # Check if user said yes/confirmed in messages
-                                                confirm_words = ("yes", "yeah", "yep", "correct", "right", "confirmed")
-                                                for hm in msgs:
-                                                    if isinstance(hm, HumanMessage):
-                                                        ht = (getattr(hm, "content", "") or "").strip().lower()
-                                                        if any(ht.startswith(w) for w in confirm_words):
-                                                            user_provided_phone = True
-                                                            break
-                                                        digits = "".join(c for c in ht if c.isdigit())
-                                                        if digits and len(digits) >= 10 and phone_arg.endswith(digits[-10:]):
-                                                            user_provided_phone = True
-                                                            break
+
+                            # Fallback: check if ANY recent HumanMessage is a confirmation word
+                            # This handles cases where the directive wasn't set correctly
+                            if not user_provided_phone:
+                                confirm_words = ("yes", "yeah", "yep", "yup", "correct", "right", "confirmed", "that's right", "thats right", "yes it is", "it is", "sure", "ok", "okay")
+                                for hm in reversed(msgs):
+                                    if isinstance(hm, HumanMessage):
+                                        ht = (getattr(hm, "content", "") or "").strip().lower()
+                                        # Check if message is a simple confirmation
+                                        if ht in confirm_words or any(ht.startswith(w + " ") or ht == w for w in confirm_words):
+                                            user_provided_phone = True
+                                            logger.info("[%s] Phone confirmed by user affirmative: '%s'", name, ht)
+                                            break
+                                        # Check if user explicitly provided a phone number
+                                        digits = "".join(c for c in ht if c.isdigit())
+                                        if digits and len(digits) >= 10 and phone_arg.endswith(digits[-10:]):
+                                            user_provided_phone = True
+                                            logger.info("[%s] Phone confirmed by user providing number", name)
+                                            break
+                                        # Only check the most recent HumanMessage for confirmation context
                                         break
 
                             if not user_provided_phone:
@@ -478,17 +490,23 @@ def _build_ava_style_graph():
                     sess = state.get("session_context") or {}
                     # DEFENSE-IN-DEPTH: if graph state session_context is empty/stale,
                     # load fresh data from session store to prevent state-loss regressions
+                    _sid = state.get("session_id", "")
                     if not sess.get("customer_name") and not sess.get("greeting_done"):
                         from Banking_agent.app.db.session_store import get_session as _get_fresh_session
-                        _sid = state.get("session_id", "")
                         if _sid:
                             _fresh = _get_fresh_session(_sid)
                             if _fresh:
                                 sess = {**sess, **_fresh}
-                                logger.info("Entry node: recovered session from store for %s: %s", _sid, {k: v for k, v in _fresh.items() if k != "messages"})
+                                logger.info("Entry node: recovered session from store for %s: %s", _sid, {k: v for k, v in _fresh.items() if k not in ("messages", "conversation_state")})
+                    
+                    # Import state utilities
+                    from Banking_agent.app.db.session_store import sanitize_phone as _sanitize_phone, get_conversation_state as _get_conv_state
+                    
                     user_text = (getattr(last, "content", "") or "").strip().lower()
                     cust_name = sess.get("customer_name", "")
-                    phone = (state.get("phone_number") or sess.get("phone_number") or "").strip()
+                    # Sanitize phone number to 10 digits
+                    phone = _sanitize_phone(state.get("phone_number") or sess.get("phone_number") or "")
+                    conv_state = _get_conv_state(_sid) if _sid else None
                     is_authenticated = sess.get("authenticated", False)
                     balance_kws = [
                         "balance", "transaction", "account", "how much",
@@ -510,11 +528,17 @@ def _build_ava_style_graph():
                             current_dialog = "authentication_agent"
                             logger.info("Entry node: recovered dialog_state=authentication_agent from session flags")
 
-                    logger.info("Entry node session: authenticated=%s, customer_name=%s, phone=%s, greeting_done=%s, dialog_state=%s",
-                                is_authenticated, cust_name, phone, sess.get("greeting_done"), current_dialog)
+                    logger.info("Entry node session: authenticated=%s, customer_name=%s, phone=%s, greeting_done=%s, dialog_state=%s, conv_state=%s",
+                                is_authenticated, cust_name, phone, sess.get("greeting_done"), current_dialog, conv_state)
 
-                    # PRIORITY 0: If user is mid-authentication, route follow-up back to auth agent.
-                    if current_dialog == "authentication_agent" and not is_authenticated:
+                    # PRIORITY 0: If user is mid-authentication (but not yet authenticated), route follow-up back to auth agent.
+                    # Check conversation state to prevent re-entry if already authenticated
+                    _is_mid_auth = (
+                        current_dialog == "authentication_agent" and 
+                        not is_authenticated and
+                        conv_state not in ("AUTHENTICATED", "ACTION_COMPLETE")
+                    )
+                    if _is_mid_auth:
                         _user_digits = "".join(c for c in user_text if c.isdigit())
                         _auth_phone = phone  # default: calling phone
                         _auth_name = cust_name  # default: known customer name
@@ -524,7 +548,7 @@ def _build_ava_style_graph():
                         _sid = state.get("session_id", "")
 
                         if _user_digits and len(_user_digits) >= 10:
-                            _auth_phone = _user_digits[-10:]
+                            _auth_phone = _sanitize_phone(_user_digits)  # Sanitize to 10 digits
                             # User provided a phone — look up customer name from DB immediately
                             try:
                                 from Banking_agent.app.Services.validation_services import fetch_customer_name
@@ -534,7 +558,7 @@ def _build_ava_style_graph():
                                     logger.info("Direct route: looked up customer %s from user-provided phone %s", _auth_name, _auth_phone)
                             except Exception as _e:
                                 logger.warning("Direct route: customer lookup failed for %s: %s", _auth_phone, _e)
-                            _set_sess(_sid, {"user_provided_phone": _auth_phone, "customer_name": _auth_name or "", "greeting_done": True})
+                            _set_sess(_sid, {"user_provided_phone": _auth_phone, "customer_name": _auth_name or "", "greeting_done": True, "phone_number": _auth_phone})
                         elif any(w in user_text for w in _no_words):
                             _auth_phone = ""
                             logger.info("Direct route: user rejected calling phone, will ask for registered number")
@@ -915,15 +939,26 @@ def _build_ava_style_graph():
 
                     # PRIORITY 5: Phone number available then fetch customer name first
                     if phone and len(phone) >= 10:
-                        ctx = f"[Session context] The user's phone number is {phone}. You MUST call fetch_customer_name_tool(phone_number=\"{phone}\") as your FIRST action. Do NOT greet before calling the tool. After the tool returns customer_name, greet personally: 'Hello, [Name]! Welcome to GiniBank. How may I help you today?' If the user asked for balance/transactions/account info, delegate to to_authentication_agent with the customer name and phone number."
+                        # Check if greeting was already done to avoid duplicate greetings
+                        _greeting_sent = sess.get("greeting_done", False)
+                        if _greeting_sent:
+                            ctx = f"[Session context] The user's phone number is {phone}. The user has ALREADY been greeted - do NOT say 'Hello' or 'Welcome' again. Call fetch_customer_name_tool(phone_number=\"{phone}\") to retrieve the customer's name, then respond: 'How may I help you today, [Name]?' If the user asked for balance/transactions/account info, delegate to to_authentication_agent with the customer name and phone number."
+                        else:
+                            ctx = f"[Session context] The user's phone number is {phone}. Call fetch_customer_name_tool(phone_number=\"{phone}\") as your FIRST action to retrieve the customer's name. After the tool returns customer_name, greet: 'Hello, [Name]! How may I help you today?' If the user asked for balance/transactions/account info, delegate to to_authentication_agent with the customer name and phone number."
                         return {
                             "messages": [SystemMessage(content=ctx)],
                             "dialog_state": name,
                         }
 
-                    # PRIORITY 6: First message then warm greeting
-                    if len(msgs) == 1:
+                    # PRIORITY 6: First message then warm greeting (only if not already greeted)
+                    if len(msgs) == 1 and not sess.get("greeting_done", False):
                         ctx = "[Session context] No phone number provided. Give a warm, general greeting: 'Welcome to GiniBank! How may I help you today?' Do NOT ask for phone number. If the user provides one later, use it."
+                        return {
+                            "messages": [SystemMessage(content=ctx)],
+                            "dialog_state": name,
+                        }
+                    elif len(msgs) == 1:
+                        ctx = "[Session context] No phone number provided. User has been greeted already. Ask: 'How may I help you today?' Do NOT greet again."
                         return {
                             "messages": [SystemMessage(content=ctx)],
                             "dialog_state": name,
@@ -968,7 +1003,18 @@ def _build_ava_style_graph():
                             _auth_sess = _auth_get_session(_auth_sid) if _auth_sid else {}
                             _identity_done = _auth_sess.get("identity_verified", False)
 
-                            if _identity_done and handoff_customer_name:
+                            # Check if OTP was already sent
+                            _otp_already_sent = _auth_sess.get("otp_sent", False)
+                            _is_authenticated = _auth_sess.get("authenticated", False)
+                            
+                            # If already authenticated, skip verification entirely
+                            if _is_authenticated:
+                                directive = (
+                                    f"[VERIFICATION DIRECTIVE] The customer {handoff_customer_name or 'is'} ALREADY AUTHENTICATED. "
+                                    "Do NOT ask for identity verification or OTP. "
+                                    "Proceed directly with their request."
+                                )
+                            elif _identity_done and handoff_customer_name:
                                 # Identity already verified, OTP already sent — just collect OTP
                                 directive = (
                                     f"[VERIFICATION DIRECTIVE] The customer is {handoff_customer_name}. "
@@ -1007,14 +1053,27 @@ def _build_ava_style_graph():
                                         "If they say no, ask for the correct number."
                                     )
                             elif context_phone:
-                                directive = (
-                                    f"[VERIFICATION DIRECTIVE] The customer is calling from phone number {context_phone}. "
-                                    "Ask for their full name first. Then ask them to CONFIRM whether this phone number "
-                                    "is the one registered with their account. If they confirm, use it for verification. "
-                                    "If they say no, ask them to provide the correct phone number. "
-                                    "NEVER call verify_customer_identity_tool until you have both the full name AND "
-                                    "a confirmed/provided phone number."
-                                )
+                                # Check if user's message is a phone confirmation even without customer_name
+                                _user_msg = (args.get("message", "") or "").strip().lower()
+                                _confirm_words = ("yes", "yeah", "yep", "yup", "correct", "right", "confirmed", "that's right", "thats right", "yes it is", "it is", "sure", "ok", "okay")
+                                _is_confirm = _user_msg in _confirm_words or any(_user_msg.startswith(w + " ") for w in _confirm_words)
+                                if _is_confirm:
+                                    # User confirmed phone but we don't have their name yet
+                                    directive = (
+                                        f"[VERIFICATION DIRECTIVE] The customer has CONFIRMED their phone number {context_phone}. "
+                                        "Ask: \"Thank you for confirming. Could you please tell me your full name as registered with your GiniBank account?\" "
+                                        "Once they provide their name, call verify_customer_identity_tool IMMEDIATELY with "
+                                        f"phone_number=\"{context_phone}\" and the customer_name they provide."
+                                    )
+                                else:
+                                    directive = (
+                                        f"[VERIFICATION DIRECTIVE] The customer is calling from phone number {context_phone}. "
+                                        "Ask for their full name first. Then ask them to CONFIRM whether this phone number "
+                                        "is the one registered with their account. If they confirm, use it for verification. "
+                                        "If they say no, ask them to provide the correct phone number. "
+                                        "NEVER call verify_customer_identity_tool until you have both the full name AND "
+                                        "a confirmed/provided phone number."
+                                    )
                             else:
                                 directive = (
                                     "[VERIFICATION DIRECTIVE] You MUST ask the customer for BOTH their full name "
@@ -1100,7 +1159,8 @@ _compiled_graph = None
 def get_compiled_graph():
     global _compiled_graph
     if _compiled_graph is None:
-        preload_prompts()         
+        preload_prompts()
+        preload_interim_messages()
         _compiled_graph = _build_ava_style_graph()
     return _compiled_graph
 
@@ -1113,12 +1173,21 @@ async def run_multi_agent_workflow_stream_ava(
     phone_number: Optional. If provided (e.g. from ANI/metadata), used to auto-fetch customer name on session start.
     """
     from Banking_agent.app.Utils.interim_config import get_interim_message
-    from Banking_agent.app.db.session_store import get_session, set_session, save_greeting_done, save_authenticated, parse_fetch_customer_result, save_identity_verified, save_otp_failure, save_auth_failure
+    from Banking_agent.app.db.session_store import (
+        get_session, set_session, save_greeting_done, save_authenticated,
+        parse_fetch_customer_result, save_identity_verified, save_otp_failure, save_auth_failure,
+        get_conversation_state, set_conversation_state, is_state_completed, sanitize_phone,
+        CONV_STATE_GREETING, CONV_STATE_INTENT, CONV_STATE_IDENTITY,
+        CONV_STATE_PHONE_VERIFICATION, CONV_STATE_OTP, CONV_STATE_AUTHENTICATED
+    )
+
+    # Read session once and reuse throughout workflow (saves 20-100ms)
+    session_context = get_session(session_id)
+    current_conv_state = session_context.get("conversation_state")
 
     # Secondary call_ended check (primary guard is in gRPC server)
-    _sess = get_session(session_id)
-    if _sess.get("call_ended"):
-        logger.info("BLOCKED|%s|call already ended, ignoring: %s", session_id, user_input[:80])
+    if session_context.get("call_ended"):
+        logger.info("BLOCKED_CALL_ENDED|%s|call already ended, ignoring: %s", session_id, user_input[:80])
         return
 
     _goodbye_kws = {
@@ -1155,26 +1224,29 @@ async def run_multi_agent_workflow_stream_ava(
     graph = get_compiled_graph()
     config = {"configurable": {"thread_id": session_id}}
 
-    # DEBUG: check checkpoint BEFORE we do anything
-    try:
-        _snap = await graph.aget_state(config)
-        if _snap and _snap.values:
-            _sv = _snap.values
-            logger.info(
-                "CHECKPOINT_PRE|%s|dialog_state=%s|session_context=%s|msg_count=%d",
-                session_id,
-                _sv.get("dialog_state", ""),
-                {k: v for k, v in (_sv.get("session_context") or {}).items() if k != "messages"},
-                len(_sv.get("messages", [])),
-            )
-        else:
-            logger.info("CHECKPOINT_PRE|%s|EMPTY", session_id)
-    except Exception as _e:
-        logger.warning("CHECKPOINT_PRE|%s|ERROR: %s", session_id, _e)
+    # DEBUG checkpoint pre-read disabled for performance (adds 20-100ms latency)
+    # Set DEBUG_CHECKPOINT=1 env var to enable if needed
+    if os.environ.get("DEBUG_CHECKPOINT"):
+        try:
+            _snap = await graph.aget_state(config)
+            if _snap and _snap.values:
+                _sv = _snap.values
+                logger.info(
+                    "CHECKPOINT_PRE|%s|dialog_state=%s|session_context=%s|msg_count=%d",
+                    session_id,
+                    _sv.get("dialog_state", ""),
+                    {k: v for k, v in (_sv.get("session_context") or {}).items() if k != "messages"},
+                    len(_sv.get("messages", [])),
+                )
+            else:
+                logger.info("CHECKPOINT_PRE|%s|EMPTY", session_id)
+        except Exception as _e:
+            logger.warning("CHECKPOINT_PRE|%s|ERROR: %s", session_id, _e)
 
-    phone = (phone_number or "").strip() if phone_number else ""
-    session_context = get_session(session_id)
-    logger.info("SESSION_STORE|%s|%s", session_id, {k: v for k, v in session_context.items() if k != "messages"})
+    # Sanitize phone number to 10 digits
+    phone = sanitize_phone(phone_number or "")
+    # session_context already loaded above (consolidated for performance)
+    logger.info("SESSION_STORE|%s|conv_state=%s|%s", session_id, current_conv_state, {k: v for k, v in session_context.items() if k not in ("messages", "conversation_state")})
     if phone and not session_context.get("phone_number"):
         session_context = {**session_context, "phone_number": phone}
     initial_state = {
@@ -1184,6 +1256,16 @@ async def run_multi_agent_workflow_stream_ava(
         "session_id": session_id,
         "session_context": session_context,
     }
+
+    # Send immediate greeting ONLY if not already done (check both flag and state)
+    greeting_already_done = session_context.get("greeting_done") or is_state_completed(session_id, CONV_STATE_GREETING)
+    if phone and len(phone) >= 10 and not greeting_already_done:
+        yield {"type": "interim", "message": "Hello! Welcome to GiniBank.", "agent": "greeting_agent", "tool_used": None}
+        # Mark greeting as done AND set conversation state
+        set_session(session_id, {"greeting_done": True})
+        set_conversation_state(session_id, CONV_STATE_GREETING, force=True)
+        session_context = {**session_context, "greeting_done": True, "conversation_state": CONV_STATE_GREETING}
+        initial_state["session_context"] = session_context
 
     tool_interim_names = {
         "fetch_account_balance_tool", "fetch_last_n_transactions_tool",
@@ -1200,14 +1282,33 @@ async def run_multi_agent_workflow_stream_ava(
         "fetch_credit_card_balance_tool",
         "register_complaint_tool",
         "escalate_to_human_tool",
+        "verify_customer_identity_tool",
+        "send_otp_tool",
+        "send_otp_email_tool",
+        "verify_otp_tool",
+        "unblock_card_tool",
+        "unfreeze_account_tool",
+        "check_fraud_case_status_tool",
+        "fetch_credit_card_transactions_tool",
+        "raise_service_request_tool",
+        "raise_profile_update_request_tool",
+        "credit_card_eligibility_tool",
+        "credit_card_recommendation_tool",
     }
+
+    # Track which interim messages have been shown to prevent duplicates
+    _shown_interims = set()
+    # Track if OTP flow has started (to suppress duplicate OTP messages)
+    _otp_interim_sent = session_context.get("otp_sent", False)
+    # Track if identity verification interim was shown
+    _identity_interim_sent = False
 
     _last_active_agent = None
 
     async for chunk in graph.astream(
         initial_state, config=config, stream_mode="updates"
     ):
-        print("CHUNKKKKKKK",chunk)
+        logger.debug("CHUNK|%s", list(chunk.keys()))
         for node_name, node_output in chunk.items():
             # Track which agent node is active (not entry/tool nodes)
             if not node_name.startswith("enter_") and not node_name.endswith("_tools"):
@@ -1226,41 +1327,80 @@ async def run_multi_agent_workflow_stream_ava(
                             if tool_data.get("otp_verified") is True:
                                 # Full authentication complete — OTP passed
                                 auth_name = tool_data.get("customer_name", "")
-                                auth_phone = get_session(session_id).get("phone_number", phone)
+                                auth_phone = sanitize_phone(get_session(session_id).get("phone_number", phone))
                                 save_authenticated(session_id, auth_name, auth_phone)
-                                logger.info("Session %s: OTP verified, auth saved (name=%s)", session_id, auth_name)
+                                # Set conversation state to AUTHENTICATED
+                                set_conversation_state(session_id, CONV_STATE_AUTHENTICATED, force=True)
+                                logger.info("Session %s: OTP verified, auth saved, state=AUTHENTICATED (name=%s)", session_id, auth_name)
                             elif tool_data.get("otp_verified") is False:
-                                if tool_data.get("attempts_left", 1) == 0:
-                                    yield {
-                                        "type": "final",
-                                        "message": "For your security, we are unable to verify your identity after multiple OTP attempts. Please visit your nearest GiniBank branch or contact our helpline for assistance. Goodbye.",
-                                        "agent": "authentication_agent",
-                                        "tool_used": None
-                                    }
-                                    return
                                 failures = save_otp_failure(session_id)
                                 logger.info("Session %s: OTP failure count=%d", session_id, failures)
+                                
+                                # Escalate to human after 2 failed OTP attempts
+                                if failures >= 2 or tool_data.get("attempts_left", 1) == 0:
+                                    logger.info("Session %s: OTP failures=%d, escalating to human agent", session_id, failures)
+                                    yield {
+                                        "type": "escalate",
+                                        "message": "I apologize for the inconvenience. I'm connecting you with a banking specialist who can assist you further. Please hold.",
+                                        "agent": "authentication_agent",
+                                        "tool_used": "escalate_to_human_tool"
+                                    }
+                                    set_session(session_id, {"escalated": True, "escalation_reason": "otp_failure"})
+                                    return
                             elif tool_data.get("identity_verified") is True:
-                                # Identity (name+phone) verified — auto-send OTP email
-                                id_name  = tool_data.get("customer_name", "")
-                                id_phone = tool_data.get("phone_number", phone)
-                                save_identity_verified(session_id, id_name, id_phone)
-                                # Force send OTP email immediately (don't rely on LLM to call the tool)
-                                try:
-                                    from Banking_agent.app.Services.otp_service import generate_and_send_otp_email
-                                    _otp_result = generate_and_send_otp_email(id_name, id_phone)
-                                    logger.info("Auto OTP email sent for %s: %s", id_name, _otp_result.get("status", "unknown"))
-                                except Exception as _otp_err:
-                                    logger.error("Auto OTP email FAILED for %s: %s", id_name, _otp_err)
-                            elif tool_data.get("identity_verified") is False:
-                                failures = save_auth_failure(session_id)
-                                if failures >= 3:
+                                # Identity (name+phone) verified — check if OTP already sent
+                                id_name = tool_data.get("customer_name", "")
+                                id_phone = sanitize_phone(tool_data.get("phone_number", phone))
+                                
+                                # Check if OTP was already sent (prevent duplicates)
+                                _current_sess = get_session(session_id)
+                                _otp_already_sent = _current_sess.get("otp_sent", False)
+                                
+                                if _otp_already_sent or _otp_interim_sent:
+                                    logger.info("Session %s: OTP already sent, skipping duplicate", session_id)
+                                else:
+                                    save_identity_verified(session_id, id_name, id_phone)
+                                    # Set state to OTP and mark OTP as sent
+                                    set_conversation_state(session_id, CONV_STATE_OTP, force=True)
+                                    set_session(session_id, {"otp_sent": True, "phone_number": id_phone})
+                                    
+                                    # Mark OTP interim as sent to prevent duplicates
+                                    _otp_interim_sent = True
+                                    _shown_interims.add("send_otp_email_tool")
+                                    _shown_interims.add("send_otp_tool")
+                                    _shown_interims.add("verify_customer_identity_tool")
+                                    
+                                    # Yield FINAL message for OTP flow (not interim, so user gets response)
                                     yield {
                                         "type": "final",
-                                        "message": "For your security, we are unable to verify your identity after multiple attempts. Please visit your nearest GiniBank branch or contact our helpline for assistance. Goodbye.",
+                                        "message": f"Thank you, {id_name}. Your identity has been verified. I'm sending a verification code to your registered email. Please share the code once you receive it.",
                                         "agent": "authentication_agent",
-                                        "tool_used": None
+                                        "tool_used": "send_otp_email_tool"
                                     }
+                                    
+                                    # Send OTP email in background (non-blocking)
+                                    async def _send_otp_background(name: str, phone_num: str):
+                                        try:
+                                            from Banking_agent.app.Services.otp_service import generate_and_send_otp_email
+                                            result = await asyncio.to_thread(generate_and_send_otp_email, name, phone_num)
+                                            logger.info("Auto OTP email sent for %s: %s", name, result.get("status", "unknown"))
+                                        except Exception as err:
+                                            logger.error("Auto OTP email FAILED for %s: %s", name, err)
+                                    asyncio.create_task(_send_otp_background(id_name, id_phone))
+                            elif tool_data.get("identity_verified") is False:
+                                failures = save_auth_failure(session_id)
+                                logger.info("Session %s: identity verification failure count=%d", session_id, failures)
+                                
+                                # Escalate to human after 2 failed identity verification attempts
+                                if failures >= 2:
+                                    logger.info("Session %s: auth failures=%d, escalating to human agent", session_id, failures)
+                                    yield {
+                                        "type": "escalate",
+                                        "message": "I apologize for the inconvenience. I'm connecting you with a banking specialist who can assist you with your verification. Please hold.",
+                                        "agent": "authentication_agent",
+                                        "tool_used": "escalate_to_human_tool"
+                                    }
+                                    set_session(session_id, {"escalated": True, "escalation_reason": "identity_verification_failure"})
                                     return
                             elif tool_data.get("escalated") is True:
                                 yield {
@@ -1283,9 +1423,27 @@ async def run_multi_agent_workflow_stream_ava(
                     last_tool_used = tc_name
                     last_agent_used = node_name
 
+                    # Skip interim if already shown or if OTP flow already started
+                    if tc_name in _shown_interims:
+                        logger.info("Skipping duplicate interim for %s", tc_name)
+                        continue
+                    
+                    # Skip OTP-related interims if OTP flow already started
+                    if tc_name in ("send_otp_tool", "send_otp_email_tool") and _otp_interim_sent:
+                        logger.info("Skipping OTP interim - OTP flow already started")
+                        continue
+                    
+                    # Skip verify identity interim if we already processed identity verification
+                    if tc_name == "verify_customer_identity_tool" and _identity_interim_sent:
+                        logger.info("Skipping verify identity interim - already shown")
+                        continue
+
                     if tc_name in tool_interim_names:
                         interim_msg = get_interim_message(tc_name)
                         yield {"type": "interim", "message": interim_msg}
+                        _shown_interims.add(tc_name)
+                        if tc_name == "verify_customer_identity_tool":
+                            _identity_interim_sent = True
                 continue
             content = getattr(last, "content", None)
             if isinstance(content, list):
@@ -1294,12 +1452,6 @@ async def run_multi_agent_workflow_stream_ava(
                     for part in content
                     if isinstance(part, dict)
                 )
-            print("__________________")
-            print(type(last.content))
-            print(last.content)
-            print("__________________")
-            # if not content or not isinstance(content, str):
-            #     continue
             if not content:
                 continue
             # content = content.strip()
@@ -1310,6 +1462,29 @@ async def run_multi_agent_workflow_stream_ava(
                 or content.lower().startswith("[session context")
             ):
                 continue
+            
+            # Skip redundant OTP/verification messages if we already sent our interim
+            _content_lower = content.lower()
+            if _otp_interim_sent:
+                _otp_redundant_phrases = [
+                    "sending a verification code",
+                    "sending you a verification code",
+                    "sending an otp",
+                    "sending otp",
+                    "dispatching a verification code",
+                    "i am sending a verification",
+                    "i'm sending a verification",
+                    "sending a code to your email",
+                    "otp has been sent",
+                    "verification code has been sent",
+                    "code is being sent",
+                    "please check your email for the otp",
+                    "please check your inbox for",
+                ]
+                if any(phrase in _content_lower for phrase in _otp_redundant_phrases):
+                    logger.info("Suppressing redundant OTP message from LLM: %s", content[:100])
+                    continue
+            
             if content:
                 yield {
                     "type": "final",

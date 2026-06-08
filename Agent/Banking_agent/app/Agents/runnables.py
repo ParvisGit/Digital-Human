@@ -2,24 +2,55 @@
 AVA-style agent runnables: create agents from config using ChatPromptTemplate + bind_tools.
 """
 import json
+import logging
 import os
 from pathlib import Path
 
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_openai import ChatOpenAI
+from langchain_anthropic import ChatAnthropic
 
 from Banking_agent.app.Utils.prompt_utils import load_prompt_from_file, get_state_config, load_prompt
 from Banking_agent.app.Utils.tool_registry import TOOL_REGISTRY
 
-def create_llm(model_provider: str, model_name: str) -> ChatGoogleGenerativeAI:
-    """Create LLM based on provider. Banking uses Google/Gemini."""
-    if model_provider.lower() == "google":
+logger = logging.getLogger(__name__)
+
+
+def _should_load_from_db() -> bool:
+    """Check if data should be loaded from database based on LOAD_FROM_DB env var."""
+    value = os.environ.get("LOAD_FROM_DB", "false").lower().strip()
+    return value in ("true", "1", "yes")
+
+
+def create_llm(model_provider: str, model_name: str, **kwargs) -> BaseChatModel:
+    """Create LLM based on provider. Supports google, openai, anthropic."""
+    provider = model_provider.lower()
+    temperature = kwargs.get("temperature", 0)
+
+    if provider == "google":
         return ChatGoogleGenerativeAI(
             model=model_name,
-            temperature=0,
-            project="digital-human-478009",
-            location="us-central1",
+            temperature=temperature,
+            project=os.environ.get("GOOGLE_PROJECT", "digital-human-478009"),
+            location=os.environ.get("GOOGLE_LOCATION", "us-central1"),
         )
+
+    if provider == "openai":
+        return ChatOpenAI(
+            model=model_name,
+            temperature=temperature,
+            api_key=os.environ.get("OPENAI_API_KEY"),
+        )
+
+    if provider == "anthropic":
+        return ChatAnthropic(
+            model=model_name,
+            temperature=temperature,
+            api_key=os.environ.get("ANTHROPIC_API_KEY"),
+        )
+
     raise ValueError(f"Unsupported model provider: {model_provider}")
 
 
@@ -37,11 +68,34 @@ def create_agent_runnables(config: dict, tool_registry: dict) -> dict:
         model = agent_cfg.get("model", "gemini-2.5-flash")
         model_provider = agent_cfg.get("model_provider", "google")
 
-        # Load prompt from file
-        # prompt_text = load_prompt_from_file(prompt_name, placeholder_values)
-        prompt_text = load_prompt(agent_name,placeholder_values)
+        # Load prompt based on LOAD_FROM_DB environment variable
+        load_from_db = _should_load_from_db()
+        prompt_text = None
+        prompt_source = None
+        
+        if load_from_db:
+            # Try database first (MongoDB with Redis cache)
+            prompt_text = load_prompt(prompt_name, placeholder_values)
+            if prompt_text:
+                prompt_source = "database"
+            else:
+                # Fallback to file if not found in database
+                prompt_text = load_prompt_from_file(prompt_name, placeholder_values)
+                if prompt_text:
+                    prompt_source = "file (DB fallback)"
+        else:
+            # Load from codebase files
+            prompt_text = load_prompt_from_file(prompt_name, placeholder_values)
+            if prompt_text:
+                prompt_source = "file"
+        
         if not prompt_text:
             prompt_text = agent_cfg.get("prompt", "")
+            if prompt_text:
+                prompt_source = "config"
+        
+        logger.info("Prompt loaded for %s from %s (LOAD_FROM_DB=%s)", 
+                    agent_name, prompt_source or "none", load_from_db)
         if not prompt_text or prompt_text == "fallback":
             raise ValueError(f"No prompt found for agent {agent_name}")
 

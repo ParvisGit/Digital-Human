@@ -16,3 +16,7 @@ redis>=5.0
 # gRPC server
 grpcio
 grpcio-tools
+
+# Multi-provider LLM support
+langchain-openai
+langchain-anthropic
