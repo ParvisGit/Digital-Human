@@ -1,0 +1,214 @@
+# =============================================================================
+# Banking Agent - .gitignore
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Environment & Configuration (secrets)
+# -----------------------------------------------------------------------------
+.env
+.env.*
+.env.local
+.env.development
+.env.production
+!.env.example
+
+# -----------------------------------------------------------------------------
+# Python
+# -----------------------------------------------------------------------------
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+venv1/
+ENV/
+env/
+.venv/
+.virtualenv/
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+pytest_cache/
+
+# Type checkers
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# -----------------------------------------------------------------------------
+# Logs & Runtime Files
+# -----------------------------------------------------------------------------
+logs/
+*.log
+*.log.*
+
+# PM2
+.pm2/
+pm2-*.log
+
+# -----------------------------------------------------------------------------
+# Generated Files & Build Artifacts
+# -----------------------------------------------------------------------------
+# Execution graph (regenerated at runtime)
+docs/execution_graph.png
+docs/execution_graph.html
+docs/execution_graph.mmd
+
+# gRPC generated files (keep source .proto, regenerate pb2 files)
+# Uncomment if you want to regenerate these:
+# generated/*.py
+
+# -----------------------------------------------------------------------------
+# Database & Cache Files
+# -----------------------------------------------------------------------------
+*.db
+*.sqlite
+*.sqlite3
+dump.rdb
+*.rdb
+
+# Redis
+*.aof
+
+# LangGraph checkpoints (if using file-based)
+checkpoints/
+.langgraph/
+
+# -----------------------------------------------------------------------------
+# IDE & Editor
+# -----------------------------------------------------------------------------
+# VS Code
+.vscode/
+*.code-workspace
+
+# JetBrains (PyCharm, IntelliJ)
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+
+# -----------------------------------------------------------------------------
+# OS Generated Files
+# -----------------------------------------------------------------------------
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Windows
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+
+# -----------------------------------------------------------------------------
+# Temporary Files
+# -----------------------------------------------------------------------------
+*.tmp
+*.temp
+*.bak
+*.swp
+*.orig
+.tmp/
+tmp/
+temp/
+
+# -----------------------------------------------------------------------------
+# Secrets & Credentials (extra safety)
+# -----------------------------------------------------------------------------
+*.pem
+*.key
+*.crt
+*.p12
+credentials.json
+service-account*.json
+*-credentials.json
+secrets/
+.secrets/
+
+# -----------------------------------------------------------------------------
+# Project-Specific
+# -----------------------------------------------------------------------------
+# CSV data files (if containing sensitive data)
+# Uncomment if Updated_database.csv contains PII:
+# Updated_database.csv
+
+# Local test files
+test_*.py
+!app/Agents/test_llm.py
+
+# Backup files
+*.backup
+*.bkp
