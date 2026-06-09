@@ -1218,6 +1218,87 @@ async def run_multi_agent_workflow_stream_ava(
         except Exception as _e:
             logger.warning("Repeat detection failed: %s", _e)
 
+    # Pre-process phone numbers in word format (e.g., "eight one seven double eight...")
+    # This helps the LLM recognize phone numbers spoken as words
+    from Banking_agent.app.Utils.phone_utils import normalize_phone_number
+    _phone_word_indicators = {
+        'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'zero',
+        'oh', 'double', 'triple'
+    }
+    _input_words = set(user_lower.split())
+    # If the input contains multiple phone word indicators, try to normalize it
+    _phone_word_count = len(_input_words & _phone_word_indicators)
+    if _phone_word_count >= 3:
+        _normalized_phone = normalize_phone_number(user_input)
+        if len(_normalized_phone) >= 10:
+            # Replace user input with normalized phone for better LLM understanding
+            logger.info("Phone pre-normalized: '%s' -> '%s'", user_input, _normalized_phone)
+            user_input = _normalized_phone
+
+    # =========================================================================
+    # CONVERSATION LOOP DETECTION & ESCALATION
+    # Detect when bot repeatedly asks the same question or user provides same info
+    # Escalate after 2 unsuccessful attempts to avoid infinite loops
+    # =========================================================================
+    def _normalize_for_comparison(text: str) -> str:
+        """Normalize text for comparison (lowercase, remove punctuation, collapse whitespace)."""
+        import re
+        text = text.lower().strip()
+        text = re.sub(r'[^\w\s]', '', text)
+        text = re.sub(r'\s+', ' ', text)
+        return text
+    
+    def _is_similar_message(msg1: str, msg2: str) -> bool:
+        """Check if two messages are similar (indicating a loop)."""
+        if not msg1 or not msg2:
+            return False
+        norm1 = _normalize_for_comparison(msg1)
+        norm2 = _normalize_for_comparison(msg2)
+        # Exact match after normalization
+        if norm1 == norm2:
+            return True
+        # Check if one contains the other (for partial matches)
+        if len(norm1) > 20 and len(norm2) > 20:
+            if norm1 in norm2 or norm2 in norm1:
+                return True
+        return False
+    
+    # Get conversation loop tracking from session
+    _loop_tracking = session_context.get("loop_tracking", {})
+    _last_bot_question = _loop_tracking.get("last_bot_question", "")
+    _last_user_response = _loop_tracking.get("last_user_response", "")
+    _repeated_question_count = _loop_tracking.get("repeated_question_count", 0)
+    _repeated_response_count = _loop_tracking.get("repeated_response_count", 0)
+    
+    # Check if user is providing the same response again
+    if _is_similar_message(user_lower, _last_user_response):
+        _repeated_response_count += 1
+        logger.info("LOOP_DETECT|%s|User repeated response %d times: '%s'", 
+                    session_id, _repeated_response_count, user_lower[:50])
+    else:
+        _repeated_response_count = 0
+    
+    # Escalate if user has repeated the same response 2+ times
+    if _repeated_response_count >= 2:
+        logger.info("LOOP_ESCALATE|%s|User repeated same response %d times, escalating", 
+                    session_id, _repeated_response_count)
+        set_session(session_id, {
+            "escalated": True, 
+            "escalation_reason": "conversation_loop_user_repeated",
+            "loop_tracking": {}
+        })
+        yield {
+            "type": "escalate",
+            "message": "I apologize for the difficulty. Let me connect you with a banking specialist who can better assist you. Please hold.",
+            "agent": "greeting_agent",
+            "tool_used": "escalate_to_human_tool"
+        }
+        return
+    
+    # Update loop tracking with current user response
+    _loop_tracking["last_user_response"] = user_lower
+    _loop_tracking["repeated_response_count"] = _repeated_response_count
+
     last_tool_used = None
     last_agent_used = None
 
@@ -1486,12 +1567,89 @@ async def run_multi_agent_workflow_stream_ava(
                     continue
             
             if content:
-                yield {
-                    "type": "final",
-                    "message": content,
-                    "agent": last_agent_used,
-                    "tool_used": last_tool_used
-                }
+                # Check if this is an escalation/transfer message
+                _is_escalation = False
+                _escalation_phrases = [
+                    "connecting you to",
+                    "transferring you to",
+                    "transfer you to",
+                    "connecting to a specialist",
+                    "connecting to a banking specialist",
+                    "speak to a human",
+                    "speak to an agent",
+                    "human agent",
+                    "banking specialist",
+                    "please hold",
+                    "transferring your call",
+                    "escalating",
+                ]
+                
+                # Check if tool used was escalate_to_human_tool
+                if last_tool_used == "escalate_to_human_tool":
+                    _is_escalation = True
+                    logger.info("Escalation detected via tool: %s", last_tool_used)
+                # Check if content contains escalation phrases
+                elif any(phrase in _content_lower for phrase in _escalation_phrases):
+                    _is_escalation = True
+                    logger.info("Escalation detected via content phrase: %s", content[:100])
+                
+                if _is_escalation:
+                    # Clear loop tracking on escalation
+                    set_session(session_id, {"loop_tracking": {}})
+                    yield {
+                        "type": "escalate",
+                        "message": content,
+                        "agent": last_agent_used,
+                        "tool_used": last_tool_used or "escalate_to_human_tool"
+                    }
+                    return
+                else:
+                    # =========================================================
+                    # BOT QUESTION LOOP DETECTION
+                    # Check if bot is asking the same question repeatedly
+                    # =========================================================
+                    _is_question = any(q in _content_lower for q in [
+                        "could you", "can you", "please provide", "what is", "what's",
+                        "may i", "would you", "do you have", "is this", "are you",
+                        "confirm", "verify", "tell me", "share", "give me"
+                    ])
+                    
+                    if _is_question and _is_similar_message(content, _last_bot_question):
+                        _repeated_question_count += 1
+                        logger.info("LOOP_DETECT|%s|Bot repeated question %d times: '%s'", 
+                                    session_id, _repeated_question_count, content[:50])
+                        
+                        # Escalate after 2 repeated questions
+                        if _repeated_question_count >= 2:
+                            logger.info("LOOP_ESCALATE|%s|Bot repeated same question %d times, escalating", 
+                                        session_id, _repeated_question_count)
+                            set_session(session_id, {
+                                "escalated": True,
+                                "escalation_reason": "conversation_loop_bot_repeated",
+                                "loop_tracking": {}
+                            })
+                            yield {
+                                "type": "escalate",
+                                "message": "I apologize for the difficulty. Let me connect you with a banking specialist who can better assist you. Please hold.",
+                                "agent": last_agent_used or "greeting_agent",
+                                "tool_used": "escalate_to_human_tool"
+                            }
+                            return
+                    else:
+                        _repeated_question_count = 0
+                    
+                    # Update loop tracking with current bot question
+                    if _is_question:
+                        _loop_tracking["last_bot_question"] = content
+                        _loop_tracking["repeated_question_count"] = _repeated_question_count
+                        set_session(session_id, {"loop_tracking": _loop_tracking})
+                    
+                    yield {
+                        "type": "final",
+                        "message": content,
+                        "agent": last_agent_used,
+                        "tool_used": last_tool_used
+                    }
 
     # Persist the active agent to MongoDB session store so the entry node
     # always knows the correct dialog_state, even if InMemorySaver loses data
